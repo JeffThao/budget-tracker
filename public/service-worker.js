@@ -22,9 +22,13 @@ self.addEventListener("install", function(evt) {
       return cache.add("/api/transaction");
     })
   );
+  evt.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(staticFilesToPreCache))
+  );
 
   self.skipWaiting();
 });
+
 
 // activate
 self.addEventListener("activate", function(evt) {
