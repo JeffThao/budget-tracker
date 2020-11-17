@@ -1,18 +1,17 @@
-
-const CACHE_NAME = "static-cache-v2";
+const CACHE_NAME = "static-cache-v1";
 const DATA_CACHE_NAME = "data-cache-v1";
 
-const iconSizes = ["72", "96", "128", "144", "152", "192", "512"];
-const iconFiles = iconSizes.map(
-  (size) => `/assets/images/icons/icon-${size}x${size}.png`
-);
 
 const staticFilesToPreCache = [
   "/",
-  "/app.js",
-  "/favicon.ico",
+  "/index.js",
+  "/styles.css",
   "/manifest.webmanifest",
-].concat(iconFiles);
+  "icons/icon-192x192.png",
+  "icons/icon-512x512.png",
+  "https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
+  "https://cdn.jsdelivr.net/npm/chart.js@2.8.0"
+]
 
 
 // install
@@ -20,7 +19,7 @@ self.addEventListener("install", function(evt) {
   evt.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       console.log("Your files were pre-cached successfully!");
-      return cache.addAll(staticFilesToPreCache);
+      return cache.add("/api/transaction");
     })
   );
 
@@ -47,15 +46,14 @@ self.addEventListener("activate", function(evt) {
 
 // fetch
 self.addEventListener("fetch", function(evt) {
-  const {url} = evt.request;
-  if (url.includes("/all") || url.includes("/find")) {
+  if (evt.request.url.includes("/api/")) {
     evt.respondWith(
       caches.open(DATA_CACHE_NAME).then(cache => {
         return fetch(evt.request)
           .then(response => {
             // If the response was good, clone it and store it in the cache.
             if (response.status === 200) {
-              cache.put(evt.request, response.clone());
+              cache.put(evt.request.url, response.clone());
             }
 
             return response;
@@ -66,7 +64,9 @@ self.addEventListener("fetch", function(evt) {
           });
       }).catch(err => console.log(err))
     );
-  } else {
+
+    return;
+  }
     // respond from static cache, request is not for /api/*
     evt.respondWith(
       caches.open(CACHE_NAME).then(cache => {
@@ -76,4 +76,4 @@ self.addEventListener("fetch", function(evt) {
       })
     );
   }
-});
+);
